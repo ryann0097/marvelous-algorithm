@@ -66,5 +66,76 @@ def matching_ready_tasks(task_graph: nx.DiGraph, ready_tasks: list[str]):
             if not nx.has_path(task_graph, u, v) and not nx.has_path(task_graph, v, u):
                 cc_graph.add_edge(u, v)
 
-    matching = nx.max_weight_matching(cc_graph, maxcardinality=True)
-    return list(matching)
+    # matching = nx.max_weight_matching(cc_graph, maxcardinality=True)
+    # return list(matching)
+
+    matching = edmonds_matching(cc_graph)
+    
+    pairs = []
+    used = set()
+    for u in matching:
+        v = matching[u]
+        if u not in used and v not in used:
+            pairs.append((u, v))
+            used.add(u)
+            used.add(v)
+    return pairs
+
+def edmonds_matching(G: nx.Graph):
+    """
+    Versão simplificada do algoritmo de Edmonds (sem contraction de blossoms).
+    Funciona para grafos pequenos com pares independentes.
+    """
+    matching = {}
+    for node in G.nodes():
+        if node in matching:
+            continue
+
+        queue = [node]
+        base = {v: v for v in G.nodes()}
+        parent = {}
+        used = {v: False for v in G.nodes()}
+        used[node] = True
+        blossom = {}
+
+        found = False
+
+        while queue and not found:
+            v = queue.pop(0)
+            for u in G.neighbors(v):
+                if base[v] == base[u] or matching.get(v) == u:
+                    continue
+                if u in matching and not used[u]:
+                    used[u] = True
+                    parent[u] = v
+                    queue.append(matching[u])
+                    used[matching[u]] = True
+                    parent[matching[u]] = u
+                elif u not in parent:
+                    path = []
+                    curr_v, curr_u = v, u
+                    while curr_v is not None:
+                        path.append(curr_v)
+                        curr_v = parent.get(curr_v)
+                        if curr_v is not None and curr_v in matching:
+                            path.append(matching[curr_v])
+                            curr_v = parent.get(matching[curr_v])
+                        else:
+                            break
+
+                    while curr_u is not None:
+                        path.append(curr_u)
+                        curr_u = parent.get(curr_u)
+                        if curr_u is not None and curr_u in matching:
+                            path.append(matching[curr_u])
+                            curr_u = parent.get(matching[curr_u])
+                        else:
+                            break
+
+                    for i in range(0, len(path) - 1, 2):
+                        matching[path[i]] = path[i + 1]
+                        matching[path[i + 1]] = path[i]
+
+                    found = True
+                    break
+    return matching
