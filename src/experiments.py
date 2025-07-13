@@ -1,8 +1,10 @@
 import networkx as nx
 import csv
 from saga.schedulers import heft, cpop, minmin, maxmin
-import simulation as smt
+import marvelous_scheduler as ms
 import graph_utils as gu
+import processors as proc
+
 
 schedulers = [
     ("HEFT", heft.HeftScheduler),
@@ -12,7 +14,7 @@ schedulers = [
 ]
 
 # Define the path to your data directory here:
-DATA_DIR = "/home/ryann0097/saga/data"
+DATA_DIR = "/home/ryann0097/saga/src/data"
 
 # Path to graph data
 graphs = gu.load_graph_data(DATA_DIR)
@@ -28,76 +30,48 @@ print("\n=============================================================\n")
 # Have to test something now.
 # Now, we're gonna to see how the graphs are gonna be seen.
 
-""" results = []
-
-for i, graph in enumerate(graphs):
-    row = {
-        "GraphName": graph.graph.get("name", f"Graph_{i}"),
-        "Nodes": graph.number_of_nodes(),
-        "Edges": graph.number_of_edges()
-    }
-
-    for sched_name, scheduler_class in schedulers:
-        scheduler = scheduler_class()
-        scheduler.schedule(graph)
-        runtime = scheduler.get_runtimes()
-        row[f"{sched_name}_Makespan"] = runtime
-    
-    marvelous_runtime = smt.execute_graph(graph)
-    row["Marvelous_Makespan"] = marvelous_runtime
-
-    results.append(row)
-
-with open("scheduler_results.csv", "w", newline="") as csvfile:
-    fieldnames = ["GraphName", "Nodes", "Edges"] + [f"{name}_Makespan" for name, _ in schedulers] + ["Marvelous_Makespan"]
-    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-    writer.writeheader()
-    writer.writerows(results)
-
-print("CSV salvo como 'scheduler_results.csv'") """
-
 
 results = []
 
 for graph in graphs:
+    network = proc.generate_processors(3)
+    
     row = {
         "GraphName": graph.graph.get("name", "Unknown"),
         "Nodes": graph.number_of_nodes(),
         "Edges": graph.number_of_edges()
     }
-    
-    # HEFT
+
     heft_scheduler = heft.HeftScheduler()
-    heft_scheduler.schedule(graph)  # Ajuste para o método correto!
-    heft_runtime = heft_scheduler.get_runtimes()
-    row["HEFT_Makespan"] = heft_runtime
-    
-    # CPOP
+    heft_schedule = heft_scheduler.schedule(network, graph)
+    heft_makespan = max(task.end for tasks in heft_schedule.values() for task in tasks)
+    row["HEFT_Makespan"] = heft_makespan
+
     cpop_scheduler = cpop.CpopScheduler()
-    cpop_scheduler.schedule(graph)
-    cpop_runtime = cpop_scheduler.get_runtimes()
-    row["CPOP_Makespan"] = cpop_runtime
-    
-    # MinMin
+    cpop_schedule = cpop_scheduler.schedule(network, graph)
+    cpop_makespan = max(task.end for tasks in cpop_schedule.values() for task in tasks)
+    row["CPOP_Makespan"] = cpop_makespan
+
     minmin_scheduler = minmin.MinMinScheduler()
-    minmin_scheduler.schedule(graph)
-    minmin_runtime = minmin_scheduler.get_runtimes()
-    row["MinMin_Makespan"] = minmin_runtime
-    
-    # MaxMin
+    minmin_schedule = minmin_scheduler.schedule(network, graph)
+    minmin_makespan = max(task.end for tasks in minmin_schedule.values() for task in tasks)
+    row["MinMin_Makespan"] = minmin_makespan
+
     maxmin_scheduler = maxmin.MaxMinScheduler()
-    maxmin_scheduler.schedule(graph)
-    maxmin_runtime = maxmin_scheduler.get_runtimes()
-    row["MaxMin_Makespan"] = maxmin_runtime
-    
-    # Marvelous (simulation)
-    marvelous_runtime = smt.execute_graph(graph)
-    row["Marvelous_Makespan"] = marvelous_runtime
-    
+    maxmin_schedule = maxmin_scheduler.schedule(network, graph)
+    maxmin_makespan = max(task.end for tasks in maxmin_schedule.values() for task in tasks)
+    row["MaxMin_Makespan"] = maxmin_makespan
+
+    marvelous_scheduler = ms.MarvelousScheduler()
+    marvelous_schedule = marvelous_scheduler.schedule(network, graph)
+    marvelous_makespan = max(task.end for tasks in marvelous_schedule.values() for task in tasks)
+    row["Marvelous_Makespan"] = marvelous_makespan
+
     results.append(row)
 
+
 # Agora salvar no CSV
-with open("scheduler_results.csv", "w", newline="") as csvfile:
+with open("./results/scheduler_results.csv", "w", newline="") as csvfile:
     fieldnames = ["GraphName", "Nodes", "Edges", "HEFT_Makespan", "CPOP_Makespan", "MinMin_Makespan", "MaxMin_Makespan", "Marvelous_Makespan"]
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
     writer.writeheader()

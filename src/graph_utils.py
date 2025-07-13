@@ -3,8 +3,16 @@ import pathlib
 
 from saga.schedulers.data.listvscluster import xml_to_digraph
 
-# Loading functions
 def load_graph_data(path_to_data):
+    """
+    Returns a list of networkx graph objects.
+
+    Params:
+    path_to_data: Directory path to graphs data.
+
+    Return:
+    list: The loaded graphs in a list.
+    """
     data_path = pathlib.Path(path_to_data)
     graphs = []
 
@@ -14,6 +22,3 @@ def load_graph_data(path_to_data):
         graphs.append(graph)
 
     return graphs
-
-
-# Maybe photos?
