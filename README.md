@@ -32,7 +32,6 @@ The source code is located in the `src/` directory and organized as follows:
 ├── marvelous_algorithm.py  # Custom task scheduling algorithm implementation
 ├── marvelous_scheduler.py  # Wrapper to integrate the custom algorithm into the SAGA framework
 ├── processors.py           # Processor architecture definitions (e.g., heterogeneity)
-├── README.md               # Main project documentation
 ├── results/                # Experimental results (CSV files, logs, makespan data, etc.)
 └── saga/                   # Original SAGA library source (schedulers, utils, etc.)
 ```
